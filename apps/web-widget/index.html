@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Fit Assistant — Shopper Widget</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 40px auto; color: #222; }
+  h2 { font-size: 18px; }
+  label { display: block; margin-top: 10px; font-size: 13px; color: #555; }
+  input, select { padding: 6px; width: 100%; box-sizing: border-box; }
+  button { margin-top: 16px; padding: 10px 16px; background: #111; color: #fff; border: none; cursor: pointer; width: 100%; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-top: 16px; }
+  .rec { font-size: 22px; font-weight: bold; }
+  .badge { display: inline-block; background: #eef; color: #226; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 4px 0; }
+  .bar { background: #eee; height: 10px; flex: 1; border-radius: 4px; overflow: hidden; }
+  .bar-fill { background: #2a7; height: 100%; }
+  .expl { font-size: 13px; margin: 4px 0; color: #333; }
+  .priv { font-size: 11px; color: #888; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h2>Fit Assistant</h2>
+
+<label>SKU</label>
+<input id="sku" value="sku_demo_1" />
+
+<label>Height (cm)</label>
+<input id="height" type="number" value="178" />
+
+<label>Weight (kg)</label>
+<input id="weight" type="number" value="74" />
+
+<label>Fit preference</label>
+<select id="pref">
+  <option value="slim">slim</option>
+  <option value="regular" selected>regular</option>
+  <option value="relaxed">relaxed</option>
+</select>
+
+<label>Wash horizon: <span id="washVal">0</span> washes</label>
+<input id="wash" type="range" min="0" max="5" value="0" oninput="document.getElementById('washVal').textContent=this.value" />
+
+<button onclick="recommend()">Get Recommendation</button>
+
+<div id="out"></div>
+
+<script>
+const API = "http://localhost:8000";
+
+async function recommend() {
+  const body = {
+    sku_id: document.getElementById('sku').value,
+    body: {
+      height_cm: Number(document.getElementById('height').value),
+      weight_kg: Number(document.getElementById('weight').value),
+      fit_preference: document.getElementById('pref').value,
+    },
+    wash_horizon: Number(document.getElementById('wash').value),
+  };
+
+  const res = await fetch(`${API}/v1/fit/recommend`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    document.getElementById('out').innerHTML = `<div class="card">No chart found for this SKU yet. Generate one in Seller Studio first.</div>`;
+    return;
+  }
+  render(await res.json());
+}
+
+function render(r) {
+  let html = `<div class="card">
+    <div class="rec">Recommended: ${r.recommended_size}<span class="badge">${(r.confidence*100).toFixed(0)}% confident</span></div>
+    <span class="badge">${r.latency_ms} ms</span>`;
+
+  for (const s of r.per_size) {
+    html += `<div class="bar-row"><span style="width:24px">${s.size}</span>
+      <div class="bar"><div class="bar-fill" style="width:${s.p_fit*100}%"></div></div>
+      <span>${(s.p_fit*100).toFixed(0)}%</span></div>`;
+  }
+
+  for (const e of r.explanations) {
+    html += `<p class="expl">• ${e}</p>`;
+  }
+
+  html += `<p class="priv">Privacy: raw image retained = ${r.privacy.raw_image_retained} · processed = ${r.privacy.processed}</p></div>`;
+  document.getElementById('out').innerHTML = html;
+}
+</script>
+</body>
+</html>

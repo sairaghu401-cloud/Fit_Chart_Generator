@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FitChart AI — Intelligent Size & Fit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="demo-banner" id="demoBanner" role="status" aria-live="polite" hidden>
+  <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+  <span>Demo Mode Active — backend services are unreachable, so simulated data is shown below. No live AI processing is occurring.</span>
+</div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="brand"><i class="fa-solid fa-shirt" aria-hidden="true"></i> FitChart <span>AI</span><span class="build-badge" title="Some AI components use mocked/simulated logic for this demo">Demo Build</span></div>
+    <div class="nav-links">
+      <a href="#seller"><i class="fa-solid fa-store" aria-hidden="true"></i> Seller Dashboard</a>
+      <a href="#shopper"><i class="fa-solid fa-robot" aria-hidden="true"></i> Shopper Assistant</a>
+      <a href="#about"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> About</a>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <i class="fa-solid fa-shirt float-icon f1" aria-hidden="true"></i>
+  <i class="fa-solid fa-vest float-icon f2" aria-hidden="true"></i>
+  <i class="fa-solid fa-ruler-combined float-icon f3" aria-hidden="true"></i>
+  <i class="fa-solid fa-socks float-icon f4" aria-hidden="true"></i>
+  <i class="fa-solid fa-mitten float-icon f5" aria-hidden="true"></i>
+  <i class="fa-solid fa-hat-cowboy float-icon f6" aria-hidden="true"></i>
+
+  <div class="hero-inner">
+    <div class="hero-badge glass"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> Hiring Hackathon 2026 — Track 6</div>
+    <h1>FitChart <span>AI</span></h1>
+    <p>AI-Powered Dynamic Size Chart Generation &amp; Personalized Fit Recommendation</p>
+    <div class="hero-stats glass" id="heroStats">
+      <div class="stat"><span class="num" data-target="26" data-suffix="%">0%</span><small>Target: Fewer Size Returns</small></div>
+      <div class="stat"><span class="num" data-target="35" data-prefix="&lt;">0ms</span><small>Target: Fit Latency</small></div>
+      <div class="stat"><span class="num" data-target="0.03" data-decimal="true" data-prefix="₹">₹0</span><small>Target: Cost per SKU</small></div>
+    </div>
+  </div>
+</header>
+
+<main class="dashboard">
+
+  <section class="card panel reveal" id="seller">
+    <div class="panel-head">
+      <div class="panel-icon blue"><i class="fa-solid fa-store" aria-hidden="true"></i></div>
+      <div>
+        <h2>Seller Studio</h2>
+        <p class="panel-sub">Generate a size chart in seconds</p>
+      </div>
+      <span class="tag">Write Path</span>
+    </div>
+
+    <label for="name">Product Name</label>
+    <input id="name" value="Slim Fit Cotton Shirt" />
+    <span class="field-error" id="err-name" aria-live="polite"></span>
+
+    <label for="imageInput">Garment Image <span class="demo-tag">Demo Mode</span></label>
+    <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload garment image — drag and drop a file here or activate to browse">
+      <input type="file" id="imageInput" accept=".jpg,.jpeg,.png,image/jpeg,image/png" hidden />
+
+      <div class="dropzone-empty" id="dropzoneEmpty">
+        <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+        <p>Drag &amp; drop a garment image here</p>
+        <button type="button" class="browse-btn" id="browseBtn">Browse Files</button>
+        <small>JPG, JPEG or PNG — max 8MB</small>
+      </div>
+
+      <div class="dropzone-preview" id="dropzonePreview" hidden>
+        <img id="previewImg" alt="Uploaded garment preview" />
+        <div class="preview-meta">
+          <span class="preview-name" id="previewName"></span>
+          <span class="upload-success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Image accepted</span>
+          <button type="button" class="remove-btn" id="removeImageBtn" aria-label="Remove uploaded garment image"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>
+        </div>
+      </div>
+    </div>
+    <span class="field-error" id="err-image" aria-live="polite"></span>
+    <p class="demo-note" id="imageStatusNote"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Selected image is sent to chart-service for mock AI extraction when you click Generate.</p>
+
+    <label for="techpackInput">Tech Pack <span class="demo-tag">Demo Mode</span></label>
+    <div class="dropzone dropzone-compact" id="techpackZone" role="button" tabindex="0" aria-label="Upload tech pack PDF — drag and drop a file here or activate to browse">
+      <input type="file" id="techpackInput" accept=".pdf,application/pdf" hidden />
+      <div class="dropzone-empty" id="techpackEmpty">
+        <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+        <p>Drag &amp; drop a tech-pack PDF here</p>
+        <button type="button" class="browse-btn" id="techpackBrowseBtn">Browse Files</button>
+        <small>PDF only — max 8MB</small>
+      </div>
+      <div class="dropzone-preview" id="techpackPreview" hidden>
+        <i class="fa-solid fa-file-pdf techpack-icon" aria-hidden="true"></i>
+        <div class="preview-meta">
+          <span class="preview-name" id="techpackName"></span>
+          <span class="upload-success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Sent to chart-service</span>
+          <button type="button" class="remove-btn" id="removeTechpackBtn" aria-label="Remove uploaded tech pack"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>
+        </div>
+      </div>
+    </div>
+    <span class="field-error" id="err-techpack" aria-live="polite"></span>
+    <p class="demo-note" id="techpackStatusNote"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Selected PDF is sent to chart-service for mock OCR/table extraction when you click Generate.</p>
+
+    <div class="grid-2">
+      <div>
+        <label for="category">Category</label>
+        <select id="category">
+          <option value="shirt">Shirt</option>
+          <option value="t-shirt">T-Shirt</option>
+          <option value="jacket">Jacket</option>
+          <option value="jeans">Jeans</option>
+        </select>
+      </div>
+      <div>
+        <label for="gsm">GSM</label>
+        <input id="gsm" type="number" value="180" min="50" max="500" />
+        <span class="field-error" id="err-gsm" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <label for="cotton">Cotton %</label>
+        <input id="cotton" type="number" value="98" min="0" max="100" />
+        <span class="field-error" id="err-cotton" aria-live="polite"></span>
+      </div>
+      <div>
+        <label for="elastane">Elastane %</label>
+        <input id="elastane" type="number" value="2" min="0" max="100" />
+        <span class="field-error" id="err-elastane" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <button class="btn-gradient" id="generateBtn"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Generate AI Size Chart</button>
+
+    <div id="sellerResult" class="result-area"></div>
+  </section>
+
+  <section class="card panel reveal" id="shopper">
+    <div class="panel-head">
+      <div class="panel-icon purple"><i class="fa-solid fa-robot" aria-hidden="true"></i></div>
+      <div>
+        <h2>Fit Recommendation</h2>
+        <p class="panel-sub">Real-time, sub-150ms sizing</p>
+      </div>
+      <span class="tag tag-purple">Hot Path</span>
+    </div>
+
+    <label for="sku">SKU</label>
+    <input id="sku" value="sku_demo_1" />
+
+    <div class="grid-2">
+      <div>
+        <label for="height">Height (cm)</label>
+        <input id="height" type="number" value="178" min="100" max="250" />
+        <span class="field-error" id="err-height" aria-live="polite"></span>
+      </div>
+      <div>
+        <label for="weight">Weight (kg)</label>
+        <input id="weight" type="number" value="74" min="20" max="250" />
+        <span class="field-error" id="err-weight" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <label for="pref">Fit Preference</label>
+    <select id="pref">
+      <option value="slim">Slim</option>
+      <option value="regular" selected>Regular</option>
+      <option value="relaxed">Relaxed</option>
+    </select>
+
+    <label for="usualSize">Usual Size <span class="demo-tag" style="background:transparent;color:var(--muted);padding:0;font-weight:600">Optional</span></label>
+    <select id="usualSize" aria-describedby="usualSizeHint">
+      <option value="">Prefer not to say</option>
+      <option value="S">S</option>
+      <option value="M">M</option>
+      <option value="L">L</option>
+      <option value="XL">XL</option>
+    </select>
+    <p class="demo-note" id="usualSizeHint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Used only as a small calibration signal — your measurements remain the primary factor.</p>
+
+    <label for="wash">Wash Horizon: <b id="washVal">0</b> washes</label>
+    <input id="wash" type="range" min="0" max="5" value="0" aria-label="Wash horizon in number of washes" />
+
+    <div class="consent-box">
+      <label class="consent-label" for="consentCheck">
+        <input type="checkbox" id="consentCheck" />
+        <span>I consent to processing my measurements to generate a fit recommendation. Data is used for this session only and is not stored.</span>
+      </label>
+      <span class="field-error" id="err-consent" aria-live="polite"></span>
+      <p class="privacy-notice"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Privacy notice: raw body photos are never captured or stored by this demo. Measurements you enter are processed in memory only and discarded after the response is returned.</p>
+    </div>
+
+    <button class="btn-gradient btn-purple" id="recommendBtn"><i class="fa-solid fa-robot" aria-hidden="true"></i> Get AI Recommendation</button>
+
+    <div id="shopperResult" class="result-area"></div>
+  </section>
+
+</main>
+
+<section class="stats reveal">
+  <div class="stats-head">
+    <h2>Session Metrics</h2>
+    <p class="stats-note">Real counters from this browser session only — nothing here is fabricated. They reset if you clear site data.</p>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <i class="fa-solid fa-file-invoice" aria-hidden="true"></i>
+      <span class="stat-num stat-text" id="statCharts">0</span>
+      <small>Charts Generated This Session</small>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-robot" aria-hidden="true"></i>
+      <span class="stat-num stat-text" id="statRecs">0</span>
+      <small>Recommendations This Session</small>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
+      <span class="stat-num stat-text" id="statLatency">Not available yet</span>
+      <small>Last Inference Time</small>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-bullseye" aria-hidden="true"></i>
+      <span class="stat-num stat-text" id="statAvgConf">Not available yet</span>
+      <small>Avg Confidence This Session</small>
+    </div>
+  </div>
+</section>
+
+<section class="workflow reveal">
+  <h2>How It Works</h2>
+  <div class="pipeline">
+    <div class="node"><i class="fa-solid fa-user-tie" aria-hidden="true"></i><span>Seller</span></div>
+    <i class="fa-solid fa-arrow-right arrow" aria-hidden="true"></i>
+    <div class="node"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><span>Chart Service</span></div>
+    <i class="fa-solid fa-arrow-right arrow" aria-hidden="true"></i>
+    <div class="node"><i class="fa-solid fa-brain" aria-hidden="true"></i><span>AI Processing</span></div>
+    <i class="fa-solid fa-arrow-right arrow" aria-hidden="true"></i>
+    <div class="node"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span>Publish SKU</span></div>
+    <i class="fa-solid fa-arrow-right arrow" aria-hidden="true"></i>
+    <div class="node"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span>Fit Service</span></div>
+    <i class="fa-solid fa-arrow-right arrow" aria-hidden="true"></i>
+    <div class="node"><i class="fa-solid fa-comments" aria-hidden="true"></i><span>Recommendation</span></div>
+    <i class="fa-solid fa-arrow-right arrow" aria-hidden="true"></i>
+    <div class="node"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><span>Customer</span></div>
+  </div>
+</section>
+
+<section class="about reveal" id="about">
+  <h2>About FitChart AI</h2>
+  <div class="about-grid">
+    <div class="about-card">
+      <h3><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> The Problem</h3>
+      <p>30–40% of online apparel purchases are returned, and most of that is caused by inconsistent sizing, static 2D measurement tables, and generic manufacturer charts that ignore fabric stretch, shrinkage, and body variation.</p>
+    </div>
+    <div class="about-card">
+      <h3><i class="fa-solid fa-gears" aria-hidden="true"></i> How It Works</h3>
+      <p>A multi-agent AI pipeline reads garment images, fabric specs, and tech packs to auto-generate a dynamic size chart in seconds. A Bayesian fit model then matches shopper measurements against that chart in real time.</p>
+    </div>
+    <div class="about-card">
+      <h3><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Benefits</h3>
+      <ul>
+        <li><i class="fa-solid fa-check" aria-hidden="true"></i> Reduced size-related returns</li>
+        <li><i class="fa-solid fa-check" aria-hidden="true"></i> Better customer experience</li>
+        <li><i class="fa-solid fa-check" aria-hidden="true"></i> Personalized shopping, in milliseconds</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="tech reveal">
+  <h2>Technology</h2>
+  <div class="tech-grid">
+    <div class="tech-card"><i class="fa-solid fa-server" aria-hidden="true"></i><span>FastAPI</span></div>
+    <div class="tech-card"><i class="fa-solid fa-plug" aria-hidden="true"></i><span>REST API</span></div>
+    <div class="tech-card"><i class="fa-solid fa-robot" aria-hidden="true"></i><span>AI Recommendation</span></div>
+    <div class="tech-card"><i class="fa-solid fa-camera" aria-hidden="true"></i><span>Computer Vision Ready</span></div>
+    <div class="tech-card"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i><span>Bayesian Fit Engine</span></div>
+    <div class="tech-card"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i><span>Responsive SPA</span></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="brand"><i class="fa-solid fa-shirt" aria-hidden="true"></i> FitChart <span>AI</span></div>
+    <p>Built for Hiring Hackathon 2026 — Track 6: Fit Chart Generator</p>
+    <div class="footer-links">
+      <a href="#"><i class="fa-brands fa-github" aria-hidden="true"></i> Source</a>
+      <a href="#seller">Seller Dashboard</a>
+      <a href="#shopper">Shopper Assistant</a>
+      <a href="#about">About</a>
+    </div>
+  </div>
+</footer>
+
+<button class="fab" id="fabTop" title="Back to top" aria-label="Scroll back to top"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+<div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite"><div class="spinner" aria-hidden="true"></div><p id="loadingText">Working...</p></div>
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

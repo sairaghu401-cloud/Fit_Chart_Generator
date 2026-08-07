@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Seller Studio — Fit Chart Generator</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; color: #222; }
+  h1 { font-size: 20px; }
+  label { display: block; margin-top: 10px; font-size: 13px; color: #555; }
+  input, select { padding: 6px; width: 100%; box-sizing: border-box; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  button { margin-top: 16px; padding: 10px 16px; background: #111; color: #fff; border: none; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+  th, td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; text-align: left; }
+  .flag { background: #ffe4e4; border: 1px solid #f5b5b5; padding: 8px; margin-top: 12px; }
+  .ok { color: #0a7a2a; }
+  .expl { font-size: 11px; color: #666; }
+  #sku { font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>Seller Studio — generate a size chart in seconds</h1>
+
+<div class="row">
+  <div>
+    <label>Product name</label>
+    <input id="name" value="Slim Fit Cotton Shirt" />
+  </div>
+  <div>
+    <label>Category</label>
+    <select id="category"><option value="shirt">shirt</option></select>
+  </div>
+</div>
+
+<div class="row">
+  <div>
+    <label>Cotton %</label>
+    <input id="cotton" type="number" value="98" />
+  </div>
+  <div>
+    <label>Elastane %</label>
+    <input id="elastane" type="number" value="2" />
+  </div>
+  <div>
+    <label>GSM</label>
+    <input id="gsm" type="number" value="180" />
+  </div>
+</div>
+
+<button onclick="generate()">Generate Chart</button>
+
+<p id="status"></p>
+<div id="out"></div>
+
+<script>
+const API = "http://localhost:8001";
+
+async function generate() {
+  const status = document.getElementById('status');
+  status.textContent = "Creating SKU...";
+  const fabric = {
+    composition: {
+      cotton: Number(document.getElementById('cotton').value),
+      elastane: Number(document.getElementById('elastane').value),
+    },
+    gsm: Number(document.getElementById('gsm').value),
+    is_preshrunk: false,
+  };
+
+  const skuRes = await fetch(`${API}/v1/skus`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      name: document.getElementById('name').value,
+      category: document.getElementById('category').value,
+      fabric,
+    }),
+  });
+  const sku = await skuRes.json();
+
+  status.textContent = `Generating chart for ${sku.sku_id}...`;
+  const t0 = performance.now();
+  const chartRes = await fetch(`${API}/v1/skus/${sku.sku_id}/generate-chart`, { method: "POST" });
+  const chart = await chartRes.json();
+  const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+
+  status.innerHTML = `Done in <b>${elapsed}s</b> (pipeline-reported: ${(chart.generated_in_ms/1000).toFixed(1)}s) — SKU: <span id="sku">${sku.sku_id}</span> — status: <b class="${chart.status === 'published' ? 'ok' : ''}">${chart.status}</b>`;
+
+  renderChart(chart);
+}
+
+function renderChart(chart) {
+  const out = document.getElementById('out');
+  let html = "";
+
+  if (chart.outlier_flags && chart.outlier_flags.length) {
+    for (const f of chart.outlier_flags) {
+      html += `<div class="flag"><b>⚠ ${f.field}</b> (${f.severity}) — ${f.reason}<br><i>${f.action}</i></div>`;
+    }
+  }
+
+  html += "<table><tr><th>Size</th><th>Shoulder</th><th>Chest</th><th>Waist</th><th>Sleeve</th><th>After 5 washes (chest)</th></tr>";
+  for (const s of chart.sizes) {
+    html += `<tr>
+      <td><b>${s.label}</b></td>
+      <td title="${s.explanations.shoulder_cm}">${s.shoulder_cm}</td>
+      <td title="${s.explanations.chest_cm}">${s.chest_cm}</td>
+      <td title="${s.explanations.waist_cm}">${s.waist_cm}</td>
+      <td title="${s.explanations.sleeve_cm}">${s.sleeve_cm}</td>
+      <td>${s.post_wash.chest_cm}</td>
+    </tr>`;
+  }
+  html += "</table>";
+  html += `<p class="expl">Hover any cell for its explanation. Artifact pushed to fit-service (localhost:8000) — try it in the shopper widget with SKU <b>${chart.sku_id}</b>.</p>`;
+  out.innerHTML = html;
+}
+</script>
+</body>
+</html>
