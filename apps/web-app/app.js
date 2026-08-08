@@ -1,5 +1,10 @@
-const API_CHART = "http://localhost:8001";
-const API_FIT = "http://localhost:8000";
+// Local dev (localhost/127.0.0.1) always talks to locally-run services.
+// Any other origin (e.g. the deployed fit-chart-generator.pages.dev site)
+// talks to the deployed backend services. Update the two production URLs
+// below once each service is deployed (see render.yaml).
+const IS_LOCAL_DEV = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const API_CHART = IS_LOCAL_DEV ? "http://localhost:8001" : "https://fitchart-chart-service.onrender.com";
+const API_FIT = IS_LOCAL_DEV ? "http://localhost:8000" : "https://fitchart-fit-service.onrender.com";
 const FETCH_TIMEOUT_MS = 4000;
 
 let demoMode = false;

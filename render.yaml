@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: fitchart-fit-service
+    runtime: python
+    plan: free
+    rootDir: services/fit-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+  - type: web
+    name: fitchart-chart-service
+    runtime: python
+    plan: free
+    rootDir: services/chart-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      # Matches the fit-service's Blueprint name above -> deterministic URL.
+      # If Render appends a suffix due to a name collision, update this to
+      # the actual fit-service URL shown in your Render dashboard.
+      - key: FIT_SERVICE_URL
+        value: https://fitchart-fit-service.onrender.com

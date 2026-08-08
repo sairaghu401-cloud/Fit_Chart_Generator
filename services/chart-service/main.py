@@ -1,11 +1,15 @@
 """chart-service: seller write path. Mocked multi-agent pipeline (synchronous for demo)."""
 import json
+import os
 import time
 import urllib.request
 import uuid
 from typing import Optional
 
-FIT_SERVICE_URL = "http://localhost:8000"
+# Deployment-configurable: defaults to localhost so local dev is unchanged.
+# Set FIT_SERVICE_URL in the hosting platform's environment to point at the
+# deployed fit-service (e.g. https://fitchart-fit-service.onrender.com).
+FIT_SERVICE_URL = os.environ.get("FIT_SERVICE_URL", "http://localhost:8000")
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
