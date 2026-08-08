@@ -10,6 +10,8 @@ AI-assisted apparel sizing intelligence that helps sellers generate size charts 
 
 > **Honesty note.** This repo contains two layers: a **working MVP** (documented below, source of truth) and a set of forward-looking **design documents** in [`docs/00-EXECUTIVE-BRIEF.md`](docs/00-EXECUTIVE-BRIEF.md) through [`docs/07-INNOVATIONS-AND-DEMO.md`](docs/07-INNOVATIONS-AND-DEMO.md) describing a larger target architecture (multi-agent orchestration frameworks, trained ML models, a production database, etc.) that is **not** implemented in code. Every claim in this README is verified against the actual source in `services/` and `apps/`. Anything mocked is labeled **DEMO/MOCK** explicitly.
 
+> **V2 upgrade.** Optional direct measurements, a body-profile signal, size-vs-neighbor comparisons, fit-risk classification, formal no-suitable-size handling, seller fit-type/stretch-level controls, and a 20-test pytest suite. Full V1→V2 table in [`docs/v2-improvements.md`](docs/v2-improvements.md).
+
 ---
 
 ## 🖥️ Application Preview
@@ -275,7 +277,7 @@ Additional checks performed:
 
 **Styling:** Hand-written CSS (custom properties for theming, CSS Grid/Flexbox, no CSS framework)
 
-**Testing:** None automated. Manual verification via `curl` and FastAPI's `TestClient`, documented in [§ Verification / Testing](#-verification--testing).
+**Testing:** `pytest` — 20 tests across both services in `tests/` (`tests/test_fit_service.py`, `tests/test_chart_service.py`), covering business-correctness cases: slim/average/large/extreme bodies, tight/relaxed preference, optional measurements, shrinkage, no-suitable-size, probability-sum and confidence-bounds invariants, and backward compatibility. Run: `pip install -r tests/requirements.txt && pytest tests/ -v`.
 
 **Build/Development:** None required — both services run directly via `uvicorn`; the frontend is opened as a static file.
 
@@ -305,8 +307,13 @@ Hackathon Project/
 │   ├── architecture.md            ← current-state system architecture (this submission)
 │   ├── workflow.md                 ← current-state seller/shopper workflow diagrams
 │   ├── fit-algorithm.md             ← current-state fit-scoring pipeline diagram
+│   ├── v2-improvements.md            ← V1 → V2 feature table
 │   ├── images/                       ← screenshots (see below)
 │   └── 00–07-*.md                     ← original target-architecture design docs (aspirational — see note at top of each file)
+├── tests/
+│   ├── requirements.txt        ← pytest + httpx
+│   ├── test_fit_service.py
+│   └── test_chart_service.py
 ├── README.md
 └── .gitignore
 ```
@@ -431,7 +438,7 @@ Documented transparently, not as a disclaimer but as an accurate scope statement
 - **Only one garment category** (`shirt`) has real dimension data; other categories fall back to the same shirt dimensions.
 - **No persistent database.** All state is in-memory Python dictionaries and is lost on restart.
 - **No authentication or multi-tenant isolation.**
-- **No automated test suite.**
+- **Size availability/inventory is not modeled** — every size is always treated as purchasable.
 - **No production deployment configuration** (no Docker, no CI/CD) is present in this repository, despite being described in the aspirational `docs/00-07` design documents.
 
 ---

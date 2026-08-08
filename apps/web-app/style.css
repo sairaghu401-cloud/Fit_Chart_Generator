@@ -370,6 +370,33 @@ tr.row-recommended td:first-child { position: relative; }
 .toast-close:hover { color: var(--text); }
 @keyframes slideIn { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
+/* Demo scenarios */
+.demo-scenarios { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px; }
+.demo-scenarios-label { font-size: 11.5px; font-weight: 700; color: var(--muted); margin-right: 2px; }
+
+/* Optional measurements */
+.optional-measurements { margin-top: 14px; border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: var(--bg); }
+.optional-measurements summary { cursor: pointer; font-size: 12.5px; font-weight: 700; list-style: none; }
+.optional-measurements summary::-webkit-details-marker { display: none; }
+.optional-measurements summary::before { content: "\25B8"; margin-right: 6px; display: inline-block; transition: transform .15s; }
+.optional-measurements[open] summary::before { transform: rotate(90deg); }
+
+/* V2 result cards */
+.risk-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; }
+.risk-low { background: #dcfce7; color: var(--green); }
+.risk-medium { background: #fef9c3; color: #a16207; }
+.risk-high { background: #fee2e2; color: var(--red); }
+.profile-card { display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-top: 14px; font-size: 12.5px; }
+.profile-card i { font-size: 18px; color: var(--purple); }
+.profile-card b { display: block; font-size: 13.5px; }
+.profile-card small { color: var(--muted); }
+.source-tag { font-size: 9.5px; font-weight: 800; text-transform: uppercase; padding: 1px 6px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
+.source-provided { background: #dcfce7; color: var(--green); }
+.source-estimated { background: var(--border); color: var(--muted); }
+.no-suitable-banner { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; border-radius: 12px; padding: 14px; margin-top: 14px; font-size: 12.5px; }
+[data-theme="dark"] .no-suitable-banner { background: #2a0f0f; border-color: #7f1d1d; color: #fca5a5; }
+.no-suitable-banner b { display: block; font-size: 14px; margin-bottom: 6px; }
+
 /* Copy SKU button */
 .copy-btn { background: var(--surface-solid); border: 1px solid var(--border); color: var(--text); font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: background .2s, transform .15s; }
 .copy-btn:hover { background: var(--bg); transform: translateY(-1px); }

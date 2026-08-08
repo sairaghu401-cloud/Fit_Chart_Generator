@@ -154,6 +154,15 @@
       <span class="tag tag-purple">Hot Path</span>
     </div>
 
+    <div class="demo-scenarios" role="group" aria-label="Demo scenarios">
+      <span class="demo-scenarios-label">Try a scenario:</span>
+      <button type="button" class="chip-btn" data-scenario="slim">Slim / Regular</button>
+      <button type="button" class="chip-btn" data-scenario="average">Average / Regular</button>
+      <button type="button" class="chip-btn" data-scenario="tall">Tall / Relaxed</button>
+      <button type="button" class="chip-btn" data-scenario="large">Larger Frame / Relaxed</button>
+      <button type="button" class="chip-btn" data-scenario="extreme">Extreme / No Suitable Size</button>
+    </div>
+
     <label for="sku">SKU</label>
     <input id="sku" value="sku_demo_1" />
 
@@ -189,6 +198,31 @@
 
     <label for="wash">Wash Horizon: <b id="washVal">0</b> washes</label>
     <input id="wash" type="range" min="0" max="5" value="0" aria-label="Wash horizon in number of washes" />
+
+    <details class="optional-measurements">
+      <summary>Optional: enter direct measurements <span class="demo-tag" style="background:transparent;color:var(--muted);padding:0;font-weight:600">More accurate</span></summary>
+      <p class="demo-note" style="margin-top:10px"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> FitChart AI works from height and weight alone. Any measurement you add here is used directly instead of being estimated.</p>
+      <div class="grid-2">
+        <div>
+          <label for="chestIn">Chest (cm)</label>
+          <input id="chestIn" type="number" placeholder="e.g. 100" min="50" max="200" />
+        </div>
+        <div>
+          <label for="waistIn">Waist (cm)</label>
+          <input id="waistIn" type="number" placeholder="e.g. 84" min="40" max="200" />
+        </div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <label for="shoulderIn">Shoulder (cm)</label>
+          <input id="shoulderIn" type="number" placeholder="e.g. 45" min="25" max="80" />
+        </div>
+        <div>
+          <label for="sleeveIn">Sleeve (cm)</label>
+          <input id="sleeveIn" type="number" placeholder="e.g. 59" min="30" max="100" />
+        </div>
+      </div>
+    </details>
 
     <div class="consent-box">
       <label class="consent-label" for="consentCheck">

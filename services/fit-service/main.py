@@ -39,6 +39,7 @@ class BodyInput(BaseModel):
     chest_cm: Optional[float] = None
     waist_cm: Optional[float] = None
     shoulder_cm: Optional[float] = None
+    sleeve_cm: Optional[float] = None
     fit_preference: str = "regular"
     usual_size: Optional[str] = None  # optional self-report, e.g. "L" — a soft prior, never a hard override
 
@@ -89,8 +90,48 @@ def estimate_body_zones(body: BodyInput) -> dict[str, float]:
     shoulder = body.shoulder_cm or (0.20 * h + 0.12 * w - 1.0)
     chest = body.chest_cm or (0.35 * h + 0.50 * w - 2.75)
     waist = body.waist_cm or (0.10 * h + 0.44 * w + 30.5)
-    sleeve = 0.337 * h
+    sleeve = body.sleeve_cm or (0.337 * h)
     return {"shoulder": shoulder, "chest": chest, "waist": waist, "sleeve": sleeve}
+
+
+def measurement_sources(body: BodyInput) -> dict[str, str]:
+    """Which zones came from the shopper directly vs. the estimation model —
+    shown to the user so estimated and provided numbers are never conflated."""
+    return {
+        "shoulder": "provided" if body.shoulder_cm is not None else "estimated",
+        "chest": "provided" if body.chest_cm is not None else "estimated",
+        "waist": "provided" if body.waist_cm is not None else "estimated",
+        "sleeve": "provided" if body.sleeve_cm is not None else "estimated",
+    }
+
+
+def classify_body_profile(body: BodyInput) -> dict:
+    """Coarse, explainable body-profile hint. NOT a medical or anthropometric
+    measurement — a categorical signal derived only from the inputs actually
+    given. Improves (becomes proportion-aware) when chest+waist are provided;
+    otherwise falls back to a BMI-band frame size from height/weight alone."""
+    h_m = body.height_cm / 100
+    bmi = body.weight_kg / (h_m ** 2)
+
+    if body.chest_cm is not None and body.waist_cm is not None:
+        ratio = body.chest_cm / body.waist_cm
+        if ratio > 1.15:
+            label = "Upper-body dominant"
+        elif ratio < 1.02:
+            label = "Lower-body dominant"
+        else:
+            label = "Balanced proportion"
+        basis = "chest and waist measurements"
+    else:
+        if bmi < 20:
+            label = "Slim frame"
+        elif bmi > 28:
+            label = "Larger frame"
+        else:
+            label = "Balanced frame"
+        basis = "height and weight only (provide chest + waist for a proportion-aware profile)"
+
+    return {"label": label, "basis": basis, "bmi_estimate": round(bmi, 1)}
 
 
 def score_zone(slack: float, target_ease: float, scale: float) -> float:
@@ -101,6 +142,56 @@ def score_zone(slack: float, target_ease: float, scale: float) -> float:
     if slack < 0:
         score *= 0.2
     return score
+
+
+def neighbor_reason(entry: dict) -> str:
+    """Plain-language reason a neighboring size loses, from its own binding zone."""
+    zone = entry["binding_zone"]
+    slack = entry["zone_slack_cm"][zone]
+    target = entry["_target_ease"][zone]
+    if slack < 0:
+        return f"{zone} has insufficient ease ({slack:+.1f} cm)"
+    if slack > target * 2:
+        return f"{zone} has excessive ease ({slack:+.1f} cm) — runs loose"
+    return f"{zone} ease is workable but not the best balance ({slack:+.1f} cm)"
+
+
+def compare_neighbors(art: dict, per_size: list[dict], best: dict) -> dict:
+    """Recommended size vs. one size smaller and one size larger, built
+    entirely from the zone values already computed above — no hardcoded text."""
+    sizes_order = art["sizes"]
+    by_size = {s["size"]: s for s in per_size}
+    idx = sizes_order.index(best["size"])
+    comparison: dict = {}
+    if idx > 0:
+        smaller = by_size[sizes_order[idx - 1]]
+        comparison["smaller"] = {"size": smaller["size"], "reason": neighbor_reason(smaller)}
+    if idx < len(sizes_order) - 1:
+        larger = by_size[sizes_order[idx + 1]]
+        comparison["larger"] = {"size": larger["size"], "reason": neighbor_reason(larger)}
+    return comparison
+
+
+def classify_fit_risk(best: dict, second: dict, confidence: float) -> dict:
+    """LOW / MEDIUM / HIGH, derived only from already-computed scoring —
+    never a random or arbitrary score."""
+    binding_slack = best["zone_slack_cm"][best["binding_zone"]]
+    close_call = (best["p_fit"] - second["p_fit"]) < 0.15
+    reasons = []
+    if binding_slack < 0:
+        reasons.append(f"{best['binding_zone']} has negative ease on the recommended size ({binding_slack:+.1f} cm)")
+    if confidence < 0.35:
+        reasons.append("overall confidence is low")
+    if close_call:
+        reasons.append(f"{best['size']} and {second['size']} are closely matched")
+
+    if binding_slack < 0 or confidence < 0.20:
+        level = "HIGH"
+    elif reasons:
+        level = "MEDIUM"
+    else:
+        level = "LOW"
+    return {"level": level, "reasons": reasons}
 
 
 def build_explanations(req: RecommendRequest, art: dict, per_size: list[dict],
@@ -220,6 +311,7 @@ def recommend(req: RecommendRequest):
         per_size.append({
             "size": size, "_score": overall_score, "_binding_score": zone_scores[binding_zone],
             "_prior": usual_size_prior(size, req.body.usual_size, art["sizes"]),
+            "_target_ease": zone_target_ease,
             "binding_zone": binding_zone, "zone_slack_cm": zone_slack,
             "p_small": p_small, "p_large": p_large,
         })
@@ -302,10 +394,33 @@ def recommend(req: RecommendRequest):
 
     explanations = build_explanations(req, art, per_size, best, fit_quality, shrink)
 
+    # V2 additions — all derived from values already computed above, before
+    # the private per-size fields are stripped.
+    size_comparison = compare_neighbors(art, per_size, best)
+    fit_risk = classify_fit_risk(best, second, confidence)
+    no_suitable_size = fit_quality == "Poor fit"
+
+    if (best["p_fit"] - second["p_fit"]) < 0.15 and not no_suitable_size:
+        explanations.append(
+            f"Low confidence — {best['size']} and {second['size']} are similarly suitable."
+        )
+
+    guidance = None
+    if no_suitable_size:
+        sizes_order = art["sizes"]
+        is_largest = sizes_order.index(best["size"]) == len(sizes_order) - 1
+        guidance = {
+            "closest_available": best["size"],
+            "problems": {z: v for z, v in best["zone_slack_cm"].items() if v < 0},
+            "suggested_action": ("Consider a larger or custom size."
+                                  if is_largest else "Consider a different size range."),
+        }
+
     for s in per_size:
         del s["_score"]
         del s["_binding_score"]
         del s["_prior"]
+        del s["_target_ease"]
         del s["_body_p_fit"]
         del s["_p_fit_raw"]
 
@@ -314,6 +429,12 @@ def recommend(req: RecommendRequest):
         "recommended_size": best["size"],
         "confidence": confidence,
         "fit_quality": fit_quality,
+        "no_suitable_size": no_suitable_size,
+        "guidance": guidance,
+        "fit_risk": fit_risk,
+        "size_comparison": size_comparison,
+        "body_profile": classify_body_profile(req.body),
+        "measurement_sources": measurement_sources(req.body),
         "per_size": per_size,
         "explanations": explanations,
         "privacy": {"raw_image_retained": False, "processed": "server-mock"},

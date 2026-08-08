@@ -29,38 +29,56 @@ BASE_DIMS = {  # category default, per-size, per-zone [shoulder, chest, waist, s
 ZONES = ["shoulder", "chest", "waist", "sleeve"]
 
 
+# Seller-declared garment cut and fabric-stretch level. Both actually shift
+# the ease/stretch numbers below — never just displayed.
+FIT_TYPE_EASE_MULT = {"slim": 0.7, "regular": 1.0, "relaxed": 1.3, "oversized": 1.7}
+STRETCH_LEVEL_PCT = {"none": 0.0, "low": 0.05, "medium": 0.12, "high": 0.25}
+
+
 class FabricSpec(BaseModel):
     composition: dict[str, float]  # e.g. {"cotton": 98, "elastane": 2}
     gsm: float = 180.0
     is_preshrunk: bool = False
+    stretch_level: str = "none"  # none | low | medium | high — seller's own declared stretch
 
 
 class SkuCreate(BaseModel):
     name: str
     category: str = "shirt"
     brand: Optional[str] = None
+    gender: Optional[str] = None  # stored/displayed only — no defensible formula ties gender to ease
+    fit_type: str = "regular"  # slim | regular | relaxed | oversized — the garment's own cut
     fabric: FabricSpec
 
 
-def mechanics(fabric: FabricSpec) -> dict:
+def mechanics(fabric: FabricSpec, fit_type: str = "regular") -> dict:
     """Mock Garment Mechanics Engine: deterministic rules, no model call."""
     elastane = fabric.composition.get("elastane", 0) + fabric.composition.get("spandex", 0)
-    stretch_pct = min(elastane * 0.04, 0.35)  # saturating stretch
+    elastane_stretch = elastane * 0.04
+    declared_stretch = STRETCH_LEVEL_PCT.get(fabric.stretch_level, 0.0)
+    stretch_pct = min(max(elastane_stretch, declared_stretch), 0.35)  # saturating stretch
+
     cotton_frac = fabric.composition.get("cotton", 0) / 100.0
     shrink = 0.03 * cotton_frac
     if fabric.is_preshrunk:
         shrink *= 0.3
+
+    base_ease = [1.5, 4.0, 3.0, 0.0] if stretch_pct == 0 else [1.0, 2.5, 2.0, 0.0]
+    fit_mult = FIT_TYPE_EASE_MULT.get(fit_type, 1.0)
+    ease_min_cm = [round(e * fit_mult, 2) for e in base_ease]
+
     return {
         "usable_stretch_pct": [stretch_pct] * len(ZONES),
         "shrinkage_pct": round(shrink, 4),
-        "ease_min_cm": [1.5, 4.0, 3.0, 0.0] if stretch_pct == 0 else [1.0, 2.5, 2.0, 0.0],
+        "ease_min_cm": ease_min_cm,
+        "fit_type": fit_type,
     }
 
 
 def run_agent_pipeline(sku: dict) -> dict:
     """Mock 7-agent pipeline: vision + document + materials -> reconciliation -> grading -> explain -> verify."""
     dims = BASE_DIMS.get(sku["category"], BASE_DIMS["shirt"])
-    mech = mechanics(FabricSpec(**sku["fabric"]))
+    mech = mechanics(FabricSpec(**sku["fabric"]), sku.get("fit_type", "regular"))
     outlier_flags = []
 
     # mock reconciliation: flag if elastane implausibly high
@@ -80,8 +98,9 @@ def run_agent_pipeline(sku: dict) -> dict:
             base = dims[i][zi]
             ease = mech["ease_min_cm"][zi]
             val = round(base, 1)
+            fit_note = f" ({mech['fit_type']} cut)" if mech["fit_type"] != "regular" else ""
             explanations[f"{zone}_cm"] = (
-                f"{val} cm = body {zone} + {ease} cm ease. "
+                f"{val} cm = body {zone} + {ease} cm ease{fit_note}. "
                 f"{'Stretch credit ' + str(round(mech['usable_stretch_pct'][zi]*100,1)) + '%.' if mech['usable_stretch_pct'][zi] else 'No stretch credit: zero-stretch fabric.'}"
             )
             row[f"{zone}_cm"] = val

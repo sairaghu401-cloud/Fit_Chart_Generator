@@ -338,6 +338,38 @@ async function uploadAsset(skuId, kind, file) {
 const washInput = document.getElementById('wash');
 washInput.addEventListener('input', () => document.getElementById('washVal').textContent = washInput.value);
 
+/* ================= optional direct measurements ================= */
+function readOptionalMeasurements() {
+  const fields = { chestIn: 'chest_cm', waistIn: 'waist_cm', shoulderIn: 'shoulder_cm', sleeveIn: 'sleeve_cm' };
+  const out = {};
+  for (const [inputId, apiField] of Object.entries(fields)) {
+    const raw = document.getElementById(inputId).value;
+    if (raw !== '') out[apiField] = Number(raw);
+  }
+  return out;
+}
+
+/* ================= demo scenarios (call the real API, never bypass it) ================= */
+const DEMO_SCENARIOS = {
+  slim:    { height: 160, weight: 50, pref: 'tight',   usual: '' },
+  average: { height: 175, weight: 75, pref: 'regular', usual: '' },
+  tall:    { height: 187, weight: 83.5, pref: 'relaxed', usual: 'L' },
+  large:   { height: 185, weight: 100, pref: 'relaxed', usual: 'XL' },
+  extreme: { height: 205, weight: 165, pref: 'relaxed', usual: '' },
+};
+document.querySelectorAll('[data-scenario]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const s = DEMO_SCENARIOS[btn.dataset.scenario];
+    document.getElementById('height').value = s.height;
+    document.getElementById('weight').value = s.weight;
+    document.getElementById('pref').value = s.pref;
+    document.getElementById('usualSize').value = s.usual;
+    ['chestIn', 'waistIn', 'shoulderIn', 'sleeveIn'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('consentCheck').checked = true;
+    getRecommendation();
+  });
+});
+
 /* ================= session stats (real, no fabricated numbers) ================= */
 function bumpSessionStat(key, elId) {
   const n = (parseInt(localStorage.getItem(key) || '0', 10)) + 1;
@@ -700,11 +732,12 @@ async function getRecommendation() {
   const pref = document.getElementById('pref').value;
   const usualSize = document.getElementById('usualSize').value;
   const washHorizon = Number(document.getElementById('wash').value);
+  const optionalMeasurements = readOptionalMeasurements();
 
   const animPromise = runPipelineAnimation('shopperPipe', SHOPPER_STEPS);
   const workPromise = (async () => {
     try {
-      const bodyPayload = { height_cm: height, weight_kg: weight, fit_preference: pref };
+      const bodyPayload = { height_cm: height, weight_kg: weight, fit_preference: pref, ...optionalMeasurements };
       if (usualSize) bodyPayload.usual_size = usualSize;
       const res = await apiFetch(`${API_FIT}/v1/fit/recommend`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -760,7 +793,22 @@ function renderShopperResult(r, skuId, inputBody) {
   const radius = 52, circ = 2 * Math.PI * radius;
   const offset = circ * (1 - r.confidence);
 
-  let html = `<div class="rec-hero">
+  const risk = r.fit_risk || { level: 'LOW', reasons: [] };
+  const riskCls = { LOW: 'risk-low', MEDIUM: 'risk-medium', HIGH: 'risk-high' }[risk.level] || 'risk-low';
+
+  let html = '';
+
+  if (r.no_suitable_size) {
+    const g = r.guidance || {};
+    const problems = Object.entries(g.problems || {}).map(([z, v]) => `${z} (${v} cm)`).join(', ');
+    html += `<div class="no-suitable-banner">
+      <b><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> No suitable size found</b>
+      Closest available: <b>${g.closest_available || r.recommended_size}</b>${problems ? ` — insufficient ease at: ${problems}` : ''}.
+      ${g.suggested_action ? `<br>${g.suggested_action}` : ''}
+    </div>`;
+  }
+
+  html += `<div class="rec-hero">
     <div class="label"><i class="fa-solid fa-bullseye" aria-hidden="true"></i> Recommended Size ${r.simulated ? '<span class="demo-tag">Simulated</span>' : ''}</div>
     <div class="ring-wrap">
       <svg viewBox="0 0 120 120">
@@ -773,9 +821,16 @@ function renderShopperResult(r, skuId, inputBody) {
       <div class="ring-center"><div class="ring-size">${r.recommended_size}</div><div class="ring-pct">${pct}%</div></div>
     </div>
     <div class="match-badge ${m.cls}">${m.label}</div>
+    <div style="margin-top:8px"><span class="risk-badge ${riskCls}"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> ${risk.level} risk</span></div>
     <div class="progress-track" style="max-width:220px;margin:10px auto 0"><div class="progress-fill" data-w="${pct}" style="background:linear-gradient(90deg,var(--blue),var(--purple))"></div></div>
     <div class="latency-pill"><i class="fa-solid fa-bolt" aria-hidden="true"></i> ${r.latency_ms} ms response time · fit-core v1.0</div>
   </div>`;
+
+  if (r.body_profile) {
+    html += `<div class="profile-card"><i class="fa-solid fa-person" aria-hidden="true"></i>
+      <div><b>${r.body_profile.label}</b><small>Based on ${r.body_profile.basis}</small></div>
+    </div>`;
+  }
 
   html += `<div class="why-title"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i> Fit Probability by Size</div>`;
   for (const s of r.per_size) {
@@ -796,10 +851,26 @@ function renderShopperResult(r, skuId, inputBody) {
   html += `<div class="why-card"><b><i class="fa-solid fa-droplet" aria-hidden="true"></i>Fabric Shrinkage</b>${shrinkExpl ? shrinkExpl : 'Increase wash horizon to preview post-wash shrinkage'}</div>`;
   html += `</div>`;
 
+  if (r.size_comparison && (r.size_comparison.smaller || r.size_comparison.larger)) {
+    html += `<div class="why-title"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Why Not the Next Size?</div><div class="why-grid">`;
+    if (r.size_comparison.smaller) {
+      html += `<div class="why-card"><b><i class="fa-solid fa-arrow-down" aria-hidden="true"></i>Why not ${r.size_comparison.smaller.size}?</b>${r.size_comparison.smaller.reason}</div>`;
+    }
+    if (r.size_comparison.larger) {
+      html += `<div class="why-card"><b><i class="fa-solid fa-arrow-up" aria-hidden="true"></i>Why not ${r.size_comparison.larger.size}?</b>${r.size_comparison.larger.reason}</div>`;
+    }
+    html += `</div>`;
+  }
+
   // Explainability detail — pulls real values from the request + cached artifact, never fabricated
   const art = artifactCache[skuId];
   html += `<div class="why-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Full Explanation</div><div class="explain-detail">`;
   html += `<div class="explain-row"><span class="k">Your height / weight</span><span class="v">${inputBody.height} cm / ${inputBody.weight} kg</span></div>`;
+  if (r.measurement_sources) {
+    const tags = Object.entries(r.measurement_sources)
+      .map(([zone, src]) => `${zone}<span class="source-tag source-${src}">${src}</span>`).join(' &nbsp; ');
+    html += `<div class="explain-row"><span class="k">Measurement sources</span><span class="v">${tags}</span></div>`;
+  }
   if (art) {
     const idx = art.sizes.indexOf(r.recommended_size);
     const zi = {}; art.zones.forEach((z, i) => zi[z] = i);
