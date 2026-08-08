@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fit Chart Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAF8;
+    --surface:#FFFFFF;
+    --ink:#1C1B19;
+    --stone:#6B6862;
+    --stone-light:#E4E1DA;
+    --accent:#3D5A80;
+    --accent-soft:#E7EDF3;
+    --tan:#B08968;
+    --tan-soft:#F3E9E0;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    display:grid;
+    grid-template-columns:320px 1fr;
+    min-height:100vh;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    grid-column:1 / -1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 28px;
+    border-bottom:1px solid var(--stone-light);
+    background:var(--surface);
+  }
+  .brand{display:flex;flex-direction:column;gap:2px;}
+  .brand .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.14em;
+    color:var(--tan);
+    text-transform:uppercase;
+  }
+  .brand h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:19px;
+    font-weight:600;
+    margin:0;
+  }
+  .topbar-actions{display:flex;gap:10px;}
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    padding:9px 16px;
+    border-radius:var(--radius);
+    border:1px solid var(--stone-light);
+    background:var(--surface);
+    color:var(--ink);
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .btn:hover{border-color:var(--accent);}
+  .btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .btn.primary:hover{background:#31496A;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    border-right:1px solid var(--stone-light);
+    background:var(--surface);
+    padding:24px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+    overflow-y:auto;
+  }
+  .field-group label.section-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--stone);
+    display:block;
+    margin-bottom:10px;
+  }
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    padding:7px 13px;
+    border-radius:999px;
+    border:1px solid var(--stone-light);
+    background:var(--bg);
+    cursor:pointer;
+    color:var(--ink);
+    transition:all .15s ease;
+  }
+  .chip.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  select.garment-select{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:10px 12px;
+    border-radius:var(--radius);
+    border:1px solid var(--stone-light);
+    background:var(--bg);
+    color:var(--ink);
+  }
+  .measure-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:9px 0;
+    border-bottom:1px solid var(--stone-light);
+  }
+  .measure-row:last-child{border-bottom:none;}
+  .measure-row span{font-size:13.5px;color:var(--ink);}
+  .measure-row .tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--stone);
+  }
+  .add-measure{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    color:var(--accent);
+    background:none;
+    border:none;
+    padding:8px 0 0;
+    cursor:pointer;
+    text-align:left;
+  }
+  .unit-toggle{display:flex;gap:0;border:1px solid var(--stone-light);border-radius:var(--radius);overflow:hidden;width:fit-content;}
+  .unit-toggle button{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    padding:7px 14px;
+    border:none;
+    background:var(--bg);
+    color:var(--stone);
+    cursor:pointer;
+  }
+  .unit-toggle button.active{background:var(--accent);color:#fff;}
+
+  /* ---------- Main ---------- */
+  .main{padding:28px 32px;overflow-y:auto;}
+  .main-header{margin-bottom:22px;}
+  .main-header h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:22px;
+    margin:0 0 6px;
+  }
+  .main-header p{
+    font-size:13.5px;
+    color:var(--stone);
+    margin:0;
+    max-width:520px;
+  }
+
+  .content-grid{
+    display:grid;
+    grid-template-columns:1.3fr 0.9fr;
+    gap:24px;
+    align-items:start;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--stone-light);
+    border-radius:var(--radius);
+    padding:20px;
+  }
+  .card h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:14px;
+    margin:0 0 14px;
+    font-weight:600;
+  }
+
+  table.fit-table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+  }
+  table.fit-table th, table.fit-table td{
+    text-align:center;
+    padding:10px 8px;
+    border-bottom:1px solid var(--stone-light);
+  }
+  table.fit-table th{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    color:var(--stone);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  table.fit-table td:first-child, table.fit-table th:first-child{
+    text-align:left;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    color:var(--ink);
+    font-weight:500;
+  }
+  table.fit-table td input{
+    width:52px;
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    border:1px solid transparent;
+    background:transparent;
+    border-radius:4px;
+    padding:5px 3px;
+    color:var(--ink);
+  }
+  table.fit-table td input:focus{
+    outline:none;
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  table.fit-table th.size-col.active{color:var(--accent);}
+
+  .diagram-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .diagram-note{
+    font-size:12px;
+    color:var(--stone);
+    text-align:center;
+    max-width:260px;
+  }
+  .diagram-note b{color:var(--tan);font-weight:600;}
+
+  .empty-hint{
+    margin-top:18px;
+    font-size:12.5px;
+    color:var(--stone);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .empty-hint .dot{width:6px;height:6px;border-radius:50%;background:var(--tan);display:inline-block;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="eyebrow">Apparel Size Charts</span>
+      <h1>Fit Chart Studio</h1>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" id="exportCsv">Export CSV</button>
+      <button class="btn primary" id="exportPng">Export PNG</button>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="field-group">
+      <label class="section-label">Garment</label>
+      <select class="garment-select">
+        <option>Crewneck T-Shirt</option>
+        <option>Button-Up Shirt</option>
+        <option>Wide-Leg Trouser</option>
+        <option>A-Line Dress</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="section-label">Sizes included</label>
+      <div class="chip-row" id="sizeChips">
+        <div class="chip" data-size="XS">XS</div>
+        <div class="chip active" data-size="S">S</div>
+        <div class="chip active" data-size="M">M</div>
+        <div class="chip active" data-size="L">L</div>
+        <div class="chip" data-size="XL">XL</div>
+        <div class="chip" data-size="XXL">XXL</div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="section-label">Units</label>
+      <div class="unit-toggle">
+        <button class="active" data-unit="in">IN</button>
+        <button data-unit="cm">CM</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="section-label">Measurements tracked</label>
+      <div class="measure-row"><span>Chest</span><span class="tag">A</span></div>
+      <div class="measure-row"><span>Length</span><span class="tag">B</span></div>
+      <div class="measure-row"><span>Sleeve</span><span class="tag">C</span></div>
+      <div class="measure-row"><span>Hem width</span><span class="tag">D</span></div>
+      <button class="add-measure">+ Add measurement</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="main-header">
+      <h2>Crewneck T-Shirt — Fit Chart</h2>
+      <p>Edit any figure directly in the table. The diagram on the right updates to match, so buyers see exactly where each number is taken from.</p>
+    </div>
+
+    <div class="content-grid">
+      <div class="card">
+        <h3>Chart</h3>
+        <table class="fit-table" id="fitTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="size-col" data-size="S">S</th>
+              <th class="size-col active" data-size="M">M</th>
+              <th class="size-col" data-size="L">L</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-row="A">
+              <td>Chest (A)</td>
+              <td><input value="18.0" data-size="S"></td>
+              <td><input value="19.5" data-size="M"></td>
+              <td><input value="21.0" data-size="L"></td>
+            </tr>
+            <tr data-row="B">
+              <td>Length (B)</td>
+              <td><input value="26.5" data-size="S"></td>
+              <td><input value="27.5" data-size="M"></td>
+              <td><input value="28.5" data-size="L"></td>
+            </tr>
+            <tr data-row="C">
+              <td>Sleeve (C)</td>
+              <td><input value="7.8" data-size="S"></td>
+              <td><input value="8.2" data-size="M"></td>
+              <td><input value="8.6" data-size="L"></td>
+            </tr>
+            <tr data-row="D">
+              <td>Hem width (D)</td>
+              <td><input value="17.0" data-size="S"></td>
+              <td><input value="18.5" data-size="M"></td>
+              <td><input value="20.0" data-size="L"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty-hint"><span class="dot"></span> Values in inches · click a size column header to preview it on the diagram</div>
+      </div>
+
+      <div class="card">
+        <h3>Preview — size <span id="previewSizeLabel">M</span></h3>
+        <div class="diagram-wrap">
+          <svg width="220" height="260" viewBox="0 0 220 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- garment silhouette -->
+            <path d="M60 40 L40 60 L50 90 L65 80 L65 220 L155 220 L155 80 L170 90 L180 60 L160 40 L135 30 L120 40 L100 40 L85 30 Z"
+                  fill="#F3E9E0" stroke="#1C1B19" stroke-width="1.4" stroke-linejoin="round"/>
+            <!-- neckline -->
+            <path d="M100 40 Q110 50 120 40" stroke="#1C1B19" stroke-width="1.4" fill="none"/>
+
+            <!-- dimension: chest (A) -->
+            <line x1="65" y1="95" x2="155" y2="95" stroke="#3D5A80" stroke-width="1" stroke-dasharray="3 3"/>
+            <line x1="65" y1="90" x2="65" y2="100" stroke="#3D5A80" stroke-width="1"/>
+            <line x1="155" y1="90" x2="155" y2="100" stroke="#3D5A80" stroke-width="1"/>
+            <text x="110" y="88" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#3D5A80">A · <tspan id="dimA">19.5"</tspan></text>
+
+            <!-- dimension: length (B) -->
+            <line x1="195" y1="40" x2="195" y2="220" stroke="#3D5A80" stroke-width="1" stroke-dasharray="3 3"/>
+            <line x1="190" y1="40" x2="200" y2="40" stroke="#3D5A80" stroke-width="1"/>
+            <line x1="190" y1="220" x2="200" y2="220" stroke="#3D5A80" stroke-width="1"/>
+            <text x="203" y="132" text-anchor="start" font-family="JetBrains Mono" font-size="10" fill="#3D5A80" transform="rotate(90 203,132)">B · <tspan id="dimB">27.5"</tspan></text>
+
+            <!-- dimension: sleeve (C) -->
+            <line x1="180" y1="60" x2="170" y2="90" stroke="#B08968" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="188" y="78" text-anchor="start" font-family="JetBrains Mono" font-size="9.5" fill="#B08968">C · <tspan id="dimC">8.2"</tspan></text>
+
+            <!-- dimension: hem (D) -->
+            <line x1="65" y1="230" x2="155" y2="230" stroke="#B08968" stroke-width="1" stroke-dasharray="3 3"/>
+            <line x1="65" y1="225" x2="65" y2="235" stroke="#B08968" stroke-width="1"/>
+            <line x1="155" y1="225" x2="155" y2="235" stroke="#B08968" stroke-width="1"/>
+            <text x="110" y="248" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#B08968">D · <tspan id="dimD">18.5"</tspan></text>
+          </svg>
+          <div class="diagram-note">Dimension lines pull straight from the chart — <b>A/B</b> in tailor-blue, <b>C/D</b> in thread-tan, matching the row tags on the left.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const sizeCols = document.querySelectorAll('.size-col');
+  const previewLabel = document.getElementById('previewSizeLabel');
+  const dimEls = {A: document.getElementById('dimA'), B: document.getElementById('dimB'), C: document.getElementById('dimC'), D: document.getElementById('dimD')};
+
+  function refreshDiagram(size){
+    document.querySelectorAll('input[data-size="'+size+'"]').forEach(input=>{
+      const row = input.closest('tr').dataset.row;
+      if(dimEls[row]) dimEls[row].textContent = input.value + '"';
+    });
+    previewLabel.textContent = size;
+  }
+
+  sizeCols.forEach(col=>{
+    col.addEventListener('click', ()=>{
+      sizeCols.forEach(c=>c.classList.remove('active'));
+      col.classList.add('active');
+      refreshDiagram(col.dataset.size);
+    });
+  });
+
+  document.querySelectorAll('#fitTable input').forEach(input=>{
+    input.addEventListener('input', ()=>{
+      const activeSize = document.querySelector('.size-col.active').dataset.size;
+      if(input.dataset.size === activeSize) refreshDiagram(activeSize);
+    });
+  });
+
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=> chip.classList.toggle('active'));
+  });
+
+  document.querySelectorAll('.unit-toggle button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.unit-toggle button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

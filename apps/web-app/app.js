@@ -349,6 +349,87 @@ function readOptionalMeasurements() {
   return out;
 }
 
+/* ================= tabs + sidebar (Seller Studio / Shopper Fit Analysis) ================= */
+const tabBtnSeller = document.getElementById('tabBtnSeller');
+const tabBtnShopper = document.getElementById('tabBtnShopper');
+function activateTab(which) {
+  const sellerActive = which === 'seller';
+  tabBtnSeller.classList.toggle('active', sellerActive);
+  tabBtnShopper.classList.toggle('active', !sellerActive);
+  tabBtnSeller.setAttribute('aria-selected', String(sellerActive));
+  tabBtnShopper.setAttribute('aria-selected', String(!sellerActive));
+  document.getElementById('tabPanelSeller').classList.toggle('active', sellerActive);
+  document.getElementById('tabPanelShopper').classList.toggle('active', !sellerActive);
+  document.getElementById('sidebarSeller').hidden = !sellerActive;
+  document.getElementById('sidebarShopper').hidden = sellerActive;
+}
+tabBtnSeller.addEventListener('click', () => activateTab('seller'));
+tabBtnShopper.addEventListener('click', () => activateTab('shopper'));
+
+const sidebarToggleBtn = document.getElementById('sidebarToggle');
+sidebarToggleBtn.addEventListener('click', () => {
+  const activeSidebar = document.getElementById('tabPanelSeller').classList.contains('active')
+    ? document.getElementById('sidebarSeller') : document.getElementById('sidebarShopper');
+  const open = activeSidebar.classList.toggle('open');
+  sidebarToggleBtn.setAttribute('aria-expanded', String(open));
+});
+
+/* ================= size-chip column filter (client-side display only) ================= */
+let visibleSizes = ['S', 'M', 'L', 'XL'];
+document.querySelectorAll('#sizeChips .size-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('active');
+    visibleSizes = Array.from(document.querySelectorAll('#sizeChips .size-chip.active')).map(c => c.dataset.sizeChip);
+    document.querySelectorAll('#fitTable td[data-size], #fitTable th[data-size]').forEach(cell => {
+      cell.style.display = visibleSizes.includes(cell.dataset.size) ? '' : 'none';
+    });
+  });
+});
+
+/* ================= unit toggle (display conversion only, API always uses cm) ================= */
+let displayUnit = 'cm';
+const CM_TO_IN = 0.393701;
+document.querySelectorAll('#unitToggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#unitToggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    displayUnit = btn.dataset.unit;
+    document.querySelectorAll('#fitTable td[data-cm]').forEach(cell => {
+      const cm = Number(cell.dataset.cm);
+      cell.textContent = displayUnit === 'in' ? (cm * CM_TO_IN).toFixed(1) + '"' : cm.toFixed(1);
+    });
+    const activeTh = document.querySelector('#fitTable th.size-col.active');
+    if (activeTh && lastChart) {
+      const row = lastChart.sizes.find(s => s.label === activeTh.dataset.size);
+      if (row) updateGarmentDiagram(row);
+    }
+  });
+});
+
+/* ================= garment diagram (real data, updates on size click) ================= */
+function garmentDiagramSvg() {
+  return `<svg width="200" height="230" viewBox="0 0 220 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M60 40 L40 60 L50 90 L65 80 L65 220 L155 220 L155 80 L170 90 L180 60 L160 40 L135 30 L120 40 L100 40 L85 30 Z"
+          fill="var(--tan-soft)" stroke="var(--text)" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M100 40 Q110 50 120 40" stroke="var(--text)" stroke-width="1.4" fill="none"/>
+    <line x1="65" y1="95" x2="155" y2="95" stroke="var(--blue)" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="110" y="88" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--blue)">B <tspan id="dimChest"></tspan></text>
+    <line x1="195" y1="40" x2="195" y2="220" stroke="var(--blue)" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="203" y="132" text-anchor="start" font-family="JetBrains Mono" font-size="10" fill="var(--blue)" transform="rotate(90 203,132)">A <tspan id="dimShoulder"></tspan></text>
+    <line x1="180" y1="60" x2="170" y2="90" stroke="var(--tan)" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="188" y="78" text-anchor="start" font-family="JetBrains Mono" font-size="9.5" fill="var(--tan)">D <tspan id="dimSleeve"></tspan></text>
+    <line x1="65" y1="230" x2="155" y2="230" stroke="var(--tan)" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="110" y="248" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--tan)">C <tspan id="dimWaist"></tspan></text>
+  </svg>`;
+}
+function updateGarmentDiagram(sizeRow) {
+  const set = (id, cm) => { const el = document.getElementById(id); if (el) el.textContent = displayUnit === 'in' ? (cm * CM_TO_IN).toFixed(1) + '"' : cm.toFixed(1) + 'cm'; };
+  set('dimShoulder', sizeRow.shoulder_cm);
+  set('dimChest', sizeRow.chest_cm);
+  set('dimWaist', sizeRow.waist_cm);
+  set('dimSleeve', sizeRow.sleeve_cm);
+}
+
 /* ================= demo scenarios (call the real API, never bypass it) ================= */
 const DEMO_SCENARIOS = {
   slim:    { height: 160, weight: 50, pref: 'tight',   usual: '' },
@@ -572,12 +653,12 @@ function buildMockRecommend(skuId, height, weight, washHorizon, usualSize) {
 /* ================= seller: generate chart ================= */
 document.getElementById('generateBtn').onclick = generateChart;
 
-async function doGenerateChartWork(name, category, cotton, elastane, gsm) {
-  const fabric = { composition: { cotton, elastane }, gsm, is_preshrunk: false };
+async function doGenerateChartWork(name, category, cotton, elastane, gsm, fitType, stretchLevel) {
+  const fabric = { composition: { cotton, elastane }, gsm, is_preshrunk: false, stretch_level: stretchLevel };
   try {
     const skuRes = await apiFetch(`${API_CHART}/v1/skus`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, category, fabric }),
+      body: JSON.stringify({ name, category, fit_type: fitType, fabric }),
     });
     if (!skuRes.ok) throw new Error('sku_create_failed');
     const sku = await skuRes.json();
@@ -611,10 +692,12 @@ async function generateChart() {
   const cotton = Number(document.getElementById('cotton').value);
   const elastane = Number(document.getElementById('elastane').value);
   const gsm = Number(document.getElementById('gsm').value);
+  const fitType = document.getElementById('fitTypeIn').value;
+  const stretchLevel = document.getElementById('stretchLevelIn').value;
 
   const animPromise = runPipelineAnimation('sellerPipe', SELLER_STEPS);
   const [chart] = await Promise.all([
-    doGenerateChartWork(name, category, cotton, elastane, gsm),
+    doGenerateChartWork(name, category, cotton, elastane, gsm, fitType, stretchLevel),
     animPromise,
   ]);
 
@@ -646,7 +729,6 @@ function renderSellerResult(chart) {
     <button type="button" class="copy-btn" id="copySkuBtn" aria-label="Copy SKU ${chart.sku_id} to clipboard"><i class="fa-solid fa-copy" aria-hidden="true"></i> Copy SKU</button>
     <span class="badge badge-neutral"><i class="fa-solid fa-stopwatch" aria-hidden="true"></i> ${(chart.generated_in_ms / 1000).toFixed(1)}s pipeline</span>
     <span class="badge badge-neutral"><i class="fa-solid fa-bullseye" aria-hidden="true"></i> Avg confidence ${avgConf}%</span>
-    <span class="badge badge-neutral" title="Demo model tag — not a production ML registry version"><i class="fa-solid fa-code-branch" aria-hidden="true"></i> fit-core v1.0 (mock)</span>
   </div>`;
 
   for (const f of chart.outlier_flags || []) {
@@ -659,19 +741,51 @@ function renderSellerResult(chart) {
     <button type="button" class="chip-btn report" id="downloadReportBtn"><i class="fa-solid fa-file-lines" aria-hidden="true"></i> Download Report</button>
   </div>`;
 
-  html += `<div class="table-wrap"><table><thead><tr><th>Size</th><th>Shoulder</th><th>Chest</th><th>Waist</th><th>Sleeve</th><th>5-wash chest</th></tr></thead><tbody>`;
-  for (const s of chart.sizes) {
-    html += `<tr>
-      <td><b>${s.label}</b></td>
-      <td data-tip="${s.explanations.shoulder_cm}">${s.shoulder_cm}</td>
-      <td data-tip="${s.explanations.chest_cm}">${s.chest_cm}</td>
-      <td data-tip="${s.explanations.waist_cm}">${s.waist_cm}</td>
-      <td data-tip="${s.explanations.sleeve_cm}">${s.sleeve_cm}</td>
-      <td data-tip="Forecast chest width after 5 washes, based on this fabric's shrinkage rate.">${s.post_wash.chest_cm}</td>
-    </tr>`;
+  html += `<div class="content-grid-2" style="display:grid;grid-template-columns:1.3fr 0.9fr;gap:18px;align-items:start">
+    <div class="table-wrap"><table id="fitTable"><thead><tr><th>Size</th><th data-size="S" class="size-col">S</th><th data-size="M" class="size-col">M</th><th data-size="L" class="size-col">L</th><th data-size="XL" class="size-col">XL</th></tr></thead><tbody>`;
+  const rows = { shoulder_cm: 'Shoulder (A)', chest_cm: 'Chest (B)', waist_cm: 'Waist (C)', sleeve_cm: 'Sleeve (D)' };
+  for (const [field, rowLabel] of Object.entries(rows)) {
+    html += `<tr><td>${rowLabel}</td>`;
+    for (const s of chart.sizes) {
+      html += `<td data-size="${s.label}" data-cm="${s[field]}" data-tip="${s.explanations[field]}">${s[field]}</td>`;
+    }
+    html += `</tr>`;
   }
-  html += `</tbody></table></div>`;
+  html += `<tr><td>5-wash Chest</td>`;
+  for (const s of chart.sizes) {
+    html += `<td data-size="${s.label}" data-cm="${s.post_wash.chest_cm}" data-tip="Forecast chest width after 5 washes, based on this fabric's shrinkage rate.">${s.post_wash.chest_cm}</td>`;
+  }
+  html += `</tr></tbody></table></div>
+    <div class="card" style="padding:16px">
+      <h3 style="margin:0 0 10px;font-size:13px">Preview — size <span id="previewSizeLabel">${chart.sizes[1] ? chart.sizes[1].label : chart.sizes[0].label}</span></h3>
+      <div class="diagram-wrap" id="garmentDiagram">${garmentDiagramSvg()}</div>
+      <p class="diagram-note">Click a size column to preview it here.</p>
+    </div>
+  </div>`;
   out.innerHTML = html;
+
+  document.querySelectorAll('#fitTable td[data-size], #fitTable th[data-size]').forEach(cell => {
+    cell.style.display = visibleSizes.includes(cell.dataset.size) ? '' : 'none';
+  });
+
+  const defaultRow = chart.sizes[1] || chart.sizes[0];
+  updateGarmentDiagram(defaultRow);
+  document.querySelectorAll('#fitTable th.size-col').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.setAttribute('tabindex', '0');
+    th.setAttribute('role', 'button');
+    th.setAttribute('aria-label', `Preview size ${th.dataset.size} in the garment diagram`);
+    const selectSize = () => {
+      document.querySelectorAll('#fitTable th.size-col').forEach(t => t.classList.remove('active'));
+      th.classList.add('active');
+      const row = chart.sizes.find(s => s.label === th.dataset.size);
+      if (row) { updateGarmentDiagram(row); document.getElementById('previewSizeLabel').textContent = row.label; }
+    };
+    th.addEventListener('click', selectSize);
+    th.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectSize(); }
+    });
+  });
 
   document.getElementById('copySkuBtn').onclick = async () => {
     const copyBtn = document.getElementById('copySkuBtn');
@@ -822,22 +936,13 @@ function renderShopperResult(r, skuId, inputBody) {
     </div>
     <div class="match-badge ${m.cls}">${m.label}</div>
     <div style="margin-top:8px"><span class="risk-badge ${riskCls}"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> ${risk.level} risk</span></div>
-    <div class="progress-track" style="max-width:220px;margin:10px auto 0"><div class="progress-fill" data-w="${pct}" style="background:linear-gradient(90deg,var(--blue),var(--purple))"></div></div>
-    <div class="latency-pill"><i class="fa-solid fa-bolt" aria-hidden="true"></i> ${r.latency_ms} ms response time · fit-core v1.0</div>
+    <div class="latency-pill"><i class="fa-solid fa-bolt" aria-hidden="true"></i> ${r.latency_ms} ms response time</div>
   </div>`;
 
   if (r.body_profile) {
     html += `<div class="profile-card"><i class="fa-solid fa-person" aria-hidden="true"></i>
       <div><b>${r.body_profile.label}</b><small>Based on ${r.body_profile.basis}</small></div>
     </div>`;
-  }
-
-  html += `<div class="why-title"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i> Fit Probability by Size</div>`;
-  for (const s of r.per_size) {
-    const sp = Math.round(s.p_fit * 100);
-    html += `<div class="size-row"><span class="sz">${s.size}</span>
-      <div class="progress-track"><div class="progress-fill" data-w="${sp}"></div></div>
-      <span class="pct">${sp}%</span></div>`;
   }
 
   const best = r.per_size.find(s => s.size === r.recommended_size) || r.per_size[0];
@@ -850,6 +955,16 @@ function renderShopperResult(r, skuId, inputBody) {
   html += `<div class="why-card"><b><i class="fa-solid fa-hand-point-right" aria-hidden="true"></i>Sleeve Length</b>${slack.sleeve !== undefined ? (slack.sleeve >= 0 ? '+' : '') + slack.sleeve + ' cm slack' : 'Ideal reach'}</div>`;
   html += `<div class="why-card"><b><i class="fa-solid fa-droplet" aria-hidden="true"></i>Fabric Shrinkage</b>${shrinkExpl ? shrinkExpl : 'Increase wash horizon to preview post-wash shrinkage'}</div>`;
   html += `</div>`;
+
+  html += `<div class="why-title"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i> Fit Probability by Size</div>`;
+  for (const s of r.per_size) {
+    const sp = Math.round(s.p_fit * 100);
+    html += `<div class="size-row"><span class="sz">${s.size}</span>
+      <div class="progress-track"><div class="progress-fill" data-w="${sp}"></div></div>
+      <span class="pct">${sp}%</span></div>`;
+  }
+
+  html += `<details class="advanced-analysis"><summary>Advanced analysis</summary>`;
 
   if (r.size_comparison && (r.size_comparison.smaller || r.size_comparison.larger)) {
     html += `<div class="why-title"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Why Not the Next Size?</div><div class="why-grid">`;
@@ -892,6 +1007,8 @@ function renderShopperResult(r, skuId, inputBody) {
     </div>
     <div id="fullChartWrap" hidden></div>`;
   }
+
+  html += `</details>`;
 
   html += `<div class="priv-note"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Raw image retained: ${r.privacy.raw_image_retained} · Processed: ${r.privacy.processed}</div>`;
 

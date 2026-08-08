@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FitChart AI — Intelligent Size & Fit</title>
+<title>FitChart AI — Fit Technology Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="style.css" />
 </head>
@@ -16,213 +16,212 @@
   <span>Demo Mode Active — backend services are unreachable, so simulated data is shown below. No live AI processing is occurring.</span>
 </div>
 
-<nav class="navbar">
-  <div class="nav-inner">
-    <div class="brand"><i class="fa-solid fa-shirt" aria-hidden="true"></i> FitChart <span>AI</span><span class="build-badge" title="Some AI components use mocked/simulated logic for this demo">Demo Build</span></div>
-    <div class="nav-links">
-      <a href="#seller"><i class="fa-solid fa-store" aria-hidden="true"></i> Seller Dashboard</a>
-      <a href="#shopper"><i class="fa-solid fa-robot" aria-hidden="true"></i> Shopper Assistant</a>
-      <a href="#about"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> About</a>
+<div class="topbar">
+  <div class="brand">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle controls panel" aria-expanded="false"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+    <i class="fa-solid fa-shirt" aria-hidden="true"></i>
+    <div class="brand-text">
+      <span class="eyebrow">Fit Technology Platform</span>
+      FitChart AI<span class="build-badge" title="Some AI components use mocked/simulated logic for this demo">Demo Build</span>
     </div>
+  </div>
+  <div class="topbar-actions">
     <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
   </div>
-</nav>
+</div>
 
-<header class="hero">
-  <div class="hero-bg" aria-hidden="true"></div>
-  <i class="fa-solid fa-shirt float-icon f1" aria-hidden="true"></i>
-  <i class="fa-solid fa-vest float-icon f2" aria-hidden="true"></i>
-  <i class="fa-solid fa-ruler-combined float-icon f3" aria-hidden="true"></i>
-  <i class="fa-solid fa-socks float-icon f4" aria-hidden="true"></i>
-  <i class="fa-solid fa-mitten float-icon f5" aria-hidden="true"></i>
-  <i class="fa-solid fa-hat-cowboy float-icon f6" aria-hidden="true"></i>
+<div class="app-shell">
 
-  <div class="hero-inner">
-    <div class="hero-badge glass"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> Hiring Hackathon 2026 — Track 6</div>
-    <h1>FitChart <span>AI</span></h1>
-    <p>AI-Powered Dynamic Size Chart Generation &amp; Personalized Fit Recommendation</p>
-    <div class="hero-stats glass" id="heroStats">
-      <div class="stat"><span class="num" data-target="26" data-suffix="%">0%</span><small>Target: Fewer Size Returns</small></div>
-      <div class="stat"><span class="num" data-target="35" data-prefix="&lt;">0ms</span><small>Target: Fit Latency</small></div>
-      <div class="stat"><span class="num" data-target="0.03" data-decimal="true" data-prefix="₹">₹0</span><small>Target: Cost per SKU</small></div>
-    </div>
-  </div>
-</header>
-
-<main class="dashboard">
-
-  <section class="card panel reveal" id="seller">
-    <div class="panel-head">
-      <div class="panel-icon blue"><i class="fa-solid fa-store" aria-hidden="true"></i></div>
-      <div>
-        <h2>Seller Studio</h2>
-        <p class="panel-sub">Generate a size chart in seconds</p>
-      </div>
-      <span class="tag">Write Path</span>
+  <!-- ================= SIDEBAR: Seller context ================= -->
+  <aside class="sidebar" id="sidebarSeller" aria-label="Seller controls">
+    <div class="sidebar-section">
+      <label class="section-label">Product</label>
+      <label for="name">Product Name</label>
+      <input id="name" value="Slim Fit Cotton Shirt" />
+      <span class="field-error" id="err-name" aria-live="polite"></span>
+      <label for="category">Category</label>
+      <select id="category">
+        <option value="shirt">Shirt</option>
+        <option value="t-shirt">T-Shirt</option>
+        <option value="jacket">Jacket</option>
+        <option value="jeans">Jeans</option>
+      </select>
     </div>
 
-    <label for="name">Product Name</label>
-    <input id="name" value="Slim Fit Cotton Shirt" />
-    <span class="field-error" id="err-name" aria-live="polite"></span>
-
-    <label for="imageInput">Garment Image <span class="demo-tag">Demo Mode</span></label>
-    <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload garment image — drag and drop a file here or activate to browse">
-      <input type="file" id="imageInput" accept=".jpg,.jpeg,.png,image/jpeg,image/png" hidden />
-
-      <div class="dropzone-empty" id="dropzoneEmpty">
-        <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
-        <p>Drag &amp; drop a garment image here</p>
-        <button type="button" class="browse-btn" id="browseBtn">Browse Files</button>
-        <small>JPG, JPEG or PNG — max 8MB</small>
-      </div>
-
-      <div class="dropzone-preview" id="dropzonePreview" hidden>
-        <img id="previewImg" alt="Uploaded garment preview" />
-        <div class="preview-meta">
-          <span class="preview-name" id="previewName"></span>
-          <span class="upload-success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Image accepted</span>
-          <button type="button" class="remove-btn" id="removeImageBtn" aria-label="Remove uploaded garment image"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>
-        </div>
-      </div>
-    </div>
-    <span class="field-error" id="err-image" aria-live="polite"></span>
-    <p class="demo-note" id="imageStatusNote"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Selected image is sent to chart-service for mock AI extraction when you click Generate.</p>
-
-    <label for="techpackInput">Tech Pack <span class="demo-tag">Demo Mode</span></label>
-    <div class="dropzone dropzone-compact" id="techpackZone" role="button" tabindex="0" aria-label="Upload tech pack PDF — drag and drop a file here or activate to browse">
-      <input type="file" id="techpackInput" accept=".pdf,application/pdf" hidden />
-      <div class="dropzone-empty" id="techpackEmpty">
-        <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
-        <p>Drag &amp; drop a tech-pack PDF here</p>
-        <button type="button" class="browse-btn" id="techpackBrowseBtn">Browse Files</button>
-        <small>PDF only — max 8MB</small>
-      </div>
-      <div class="dropzone-preview" id="techpackPreview" hidden>
-        <i class="fa-solid fa-file-pdf techpack-icon" aria-hidden="true"></i>
-        <div class="preview-meta">
-          <span class="preview-name" id="techpackName"></span>
-          <span class="upload-success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Sent to chart-service</span>
-          <button type="button" class="remove-btn" id="removeTechpackBtn" aria-label="Remove uploaded tech pack"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>
-        </div>
-      </div>
-    </div>
-    <span class="field-error" id="err-techpack" aria-live="polite"></span>
-    <p class="demo-note" id="techpackStatusNote"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Selected PDF is sent to chart-service for mock OCR/table extraction when you click Generate.</p>
-
-    <div class="grid-2">
-      <div>
-        <label for="category">Category</label>
-        <select id="category">
-          <option value="shirt">Shirt</option>
-          <option value="t-shirt">T-Shirt</option>
-          <option value="jacket">Jacket</option>
-          <option value="jeans">Jeans</option>
-        </select>
-      </div>
-      <div>
-        <label for="gsm">GSM</label>
-        <input id="gsm" type="number" value="180" min="50" max="500" />
-        <span class="field-error" id="err-gsm" aria-live="polite"></span>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div>
-        <label for="cotton">Cotton %</label>
-        <input id="cotton" type="number" value="98" min="0" max="100" />
-        <span class="field-error" id="err-cotton" aria-live="polite"></span>
-      </div>
-      <div>
-        <label for="elastane">Elastane %</label>
-        <input id="elastane" type="number" value="2" min="0" max="100" />
-        <span class="field-error" id="err-elastane" aria-live="polite"></span>
-      </div>
-    </div>
-
-    <button class="btn-gradient" id="generateBtn"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Generate AI Size Chart</button>
-
-    <div id="sellerResult" class="result-area"></div>
-  </section>
-
-  <section class="card panel reveal" id="shopper">
-    <div class="panel-head">
-      <div class="panel-icon purple"><i class="fa-solid fa-robot" aria-hidden="true"></i></div>
-      <div>
-        <h2>Fit Recommendation</h2>
-        <p class="panel-sub">Real-time, sub-150ms sizing</p>
-      </div>
-      <span class="tag tag-purple">Hot Path</span>
-    </div>
-
-    <div class="demo-scenarios" role="group" aria-label="Demo scenarios">
-      <span class="demo-scenarios-label">Try a scenario:</span>
-      <button type="button" class="chip-btn" data-scenario="slim">Slim / Regular</button>
-      <button type="button" class="chip-btn" data-scenario="average">Average / Regular</button>
-      <button type="button" class="chip-btn" data-scenario="tall">Tall / Relaxed</button>
-      <button type="button" class="chip-btn" data-scenario="large">Larger Frame / Relaxed</button>
-      <button type="button" class="chip-btn" data-scenario="extreme">Extreme / No Suitable Size</button>
-    </div>
-
-    <label for="sku">SKU</label>
-    <input id="sku" value="sku_demo_1" />
-
-    <div class="grid-2">
-      <div>
-        <label for="height">Height (cm)</label>
-        <input id="height" type="number" value="178" min="100" max="250" />
-        <span class="field-error" id="err-height" aria-live="polite"></span>
-      </div>
-      <div>
-        <label for="weight">Weight (kg)</label>
-        <input id="weight" type="number" value="74" min="20" max="250" />
-        <span class="field-error" id="err-weight" aria-live="polite"></span>
-      </div>
-    </div>
-
-    <label for="pref">Fit Preference</label>
-    <select id="pref">
-      <option value="slim">Slim</option>
-      <option value="regular" selected>Regular</option>
-      <option value="relaxed">Relaxed</option>
-    </select>
-
-    <label for="usualSize">Usual Size <span class="demo-tag" style="background:transparent;color:var(--muted);padding:0;font-weight:600">Optional</span></label>
-    <select id="usualSize" aria-describedby="usualSizeHint">
-      <option value="">Prefer not to say</option>
-      <option value="S">S</option>
-      <option value="M">M</option>
-      <option value="L">L</option>
-      <option value="XL">XL</option>
-    </select>
-    <p class="demo-note" id="usualSizeHint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Used only as a small calibration signal — your measurements remain the primary factor.</p>
-
-    <label for="wash">Wash Horizon: <b id="washVal">0</b> washes</label>
-    <input id="wash" type="range" min="0" max="5" value="0" aria-label="Wash horizon in number of washes" />
-
-    <details class="optional-measurements">
-      <summary>Optional: enter direct measurements <span class="demo-tag" style="background:transparent;color:var(--muted);padding:0;font-weight:600">More accurate</span></summary>
-      <p class="demo-note" style="margin-top:10px"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> FitChart AI works from height and weight alone. Any measurement you add here is used directly instead of being estimated.</p>
+    <div class="sidebar-section">
+      <label class="section-label">Garment Properties</label>
+      <label for="fitTypeIn">Fit</label>
+      <select id="fitTypeIn">
+        <option value="slim">Slim</option>
+        <option value="regular" selected>Regular</option>
+        <option value="relaxed">Relaxed</option>
+        <option value="oversized">Oversized</option>
+      </select>
+      <label for="stretchLevelIn">Stretch</label>
+      <select id="stretchLevelIn">
+        <option value="none" selected>None</option>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
       <div class="grid-2">
         <div>
-          <label for="chestIn">Chest (cm)</label>
-          <input id="chestIn" type="number" placeholder="e.g. 100" min="50" max="200" />
+          <label for="cotton">Cotton %</label>
+          <input id="cotton" type="number" value="98" min="0" max="100" />
+          <span class="field-error" id="err-cotton" aria-live="polite"></span>
         </div>
         <div>
-          <label for="waistIn">Waist (cm)</label>
-          <input id="waistIn" type="number" placeholder="e.g. 84" min="40" max="200" />
+          <label for="elastane">Elastane %</label>
+          <input id="elastane" type="number" value="2" min="0" max="100" />
+          <span class="field-error" id="err-elastane" aria-live="polite"></span>
         </div>
       </div>
+      <label for="gsm">GSM</label>
+      <input id="gsm" type="number" value="180" min="50" max="500" />
+      <span class="field-error" id="err-gsm" aria-live="polite"></span>
+      <p class="demo-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Fit and Stretch actually shift the computed ease/stretch on the backend. Fabric composition is the real driver of shrinkage.</p>
+    </div>
+
+    <div class="sidebar-section">
+      <label class="section-label">Sizes Displayed</label>
+      <div class="chip-row" id="sizeChips">
+        <button type="button" class="size-chip active" data-size-chip="S">S</button>
+        <button type="button" class="size-chip active" data-size-chip="M">M</button>
+        <button type="button" class="size-chip active" data-size-chip="L">L</button>
+        <button type="button" class="size-chip active" data-size-chip="XL">XL</button>
+      </div>
+      <p class="demo-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Filters which columns show in the generated chart below. The backend always computes all four.</p>
+    </div>
+
+    <div class="sidebar-section">
+      <label class="section-label">Units</label>
+      <div class="unit-toggle" id="unitToggle">
+        <button type="button" data-unit="cm" class="active">CM</button>
+        <button type="button" data-unit="in">IN</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <label class="section-label">Measurements Tracked</label>
+      <div class="measure-row"><span>Shoulder</span><span class="tag">A</span></div>
+      <div class="measure-row"><span>Chest</span><span class="tag">B</span></div>
+      <div class="measure-row"><span>Waist</span><span class="tag">C</span></div>
+      <div class="measure-row"><span>Sleeve</span><span class="tag">D</span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <label class="section-label">Garment Image <span class="demo-tag">Demo</span></label>
+      <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload garment image — drag and drop a file here or activate to browse">
+        <input type="file" id="imageInput" accept=".jpg,.jpeg,.png,image/jpeg,image/png" hidden />
+        <div class="dropzone-empty" id="dropzoneEmpty">
+          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+          <p>Drag &amp; drop image</p>
+          <button type="button" class="browse-btn" id="browseBtn">Browse Files</button>
+          <small>JPG/PNG — max 8MB</small>
+        </div>
+        <div class="dropzone-preview" id="dropzonePreview" hidden>
+          <img id="previewImg" alt="Uploaded garment preview" />
+          <div class="preview-meta">
+            <span class="preview-name" id="previewName"></span>
+            <span class="upload-success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Image accepted</span>
+            <button type="button" class="remove-btn" id="removeImageBtn" aria-label="Remove uploaded garment image"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>
+          </div>
+        </div>
+      </div>
+      <span class="field-error" id="err-image" aria-live="polite"></span>
+      <p class="demo-note" id="imageStatusNote"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Sent to chart-service for mock AI extraction on Generate.</p>
+
+      <label for="techpackInput" style="margin-top:14px">Tech Pack <span class="demo-tag">Demo</span></label>
+      <div class="dropzone dropzone-compact" id="techpackZone" role="button" tabindex="0" aria-label="Upload tech pack PDF — drag and drop a file here or activate to browse">
+        <input type="file" id="techpackInput" accept=".pdf,application/pdf" hidden />
+        <div class="dropzone-empty" id="techpackEmpty">
+          <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+          <p>Drag &amp; drop PDF</p>
+          <button type="button" class="browse-btn" id="techpackBrowseBtn">Browse Files</button>
+          <small>PDF — max 8MB</small>
+        </div>
+        <div class="dropzone-preview" id="techpackPreview" hidden>
+          <i class="fa-solid fa-file-pdf techpack-icon" aria-hidden="true"></i>
+          <div class="preview-meta">
+            <span class="preview-name" id="techpackName"></span>
+            <span class="upload-success"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Sent to chart-service</span>
+            <button type="button" class="remove-btn" id="removeTechpackBtn" aria-label="Remove uploaded tech pack"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>
+          </div>
+        </div>
+      </div>
+      <span class="field-error" id="err-techpack" aria-live="polite"></span>
+      <p class="demo-note" id="techpackStatusNote"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Sent to chart-service for mock OCR on Generate.</p>
+    </div>
+
+    <button class="btn-gradient" id="generateBtn"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Generate Size Chart</button>
+  </aside>
+
+  <!-- ================= SIDEBAR: Shopper context ================= -->
+  <aside class="sidebar" id="sidebarShopper" aria-label="Shopper controls" hidden>
+    <div class="sidebar-section">
+      <label class="section-label">Try a Scenario</label>
+      <div class="demo-scenarios" role="group" aria-label="Demo scenarios" style="margin-bottom:0">
+        <button type="button" class="chip-btn" data-scenario="slim">Slim/Regular</button>
+        <button type="button" class="chip-btn" data-scenario="average">Average/Regular</button>
+        <button type="button" class="chip-btn" data-scenario="tall">Tall/Relaxed</button>
+        <button type="button" class="chip-btn" data-scenario="large">Larger/Relaxed</button>
+        <button type="button" class="chip-btn" data-scenario="extreme">Extreme/None</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <label class="section-label">Product</label>
+      <label for="sku">SKU</label>
+      <input id="sku" value="sku_demo_1" />
+    </div>
+
+    <div class="sidebar-section">
+      <label class="section-label">Body</label>
       <div class="grid-2">
         <div>
-          <label for="shoulderIn">Shoulder (cm)</label>
-          <input id="shoulderIn" type="number" placeholder="e.g. 45" min="25" max="80" />
+          <label for="height">Height (cm)</label>
+          <input id="height" type="number" value="178" min="100" max="250" />
+          <span class="field-error" id="err-height" aria-live="polite"></span>
         </div>
         <div>
-          <label for="sleeveIn">Sleeve (cm)</label>
-          <input id="sleeveIn" type="number" placeholder="e.g. 59" min="30" max="100" />
+          <label for="weight">Weight (kg)</label>
+          <input id="weight" type="number" value="74" min="20" max="250" />
+          <span class="field-error" id="err-weight" aria-live="polite"></span>
         </div>
       </div>
-    </details>
+      <label for="pref">Fit Preference</label>
+      <select id="pref">
+        <option value="slim">Slim</option>
+        <option value="regular" selected>Regular</option>
+        <option value="relaxed">Relaxed</option>
+      </select>
+      <label for="usualSize">Usual Size <span class="demo-tag" style="background:transparent;color:var(--muted);padding:0;font-weight:600">Optional</span></label>
+      <select id="usualSize" aria-describedby="usualSizeHint">
+        <option value="">Prefer not to say</option>
+        <option value="S">S</option>
+        <option value="M">M</option>
+        <option value="L">L</option>
+        <option value="XL">XL</option>
+      </select>
+      <p class="demo-note" id="usualSizeHint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> A small calibration signal — measurements remain primary.</p>
+      <label for="wash">Wash Horizon: <b id="washVal">0</b> washes</label>
+      <input id="wash" type="range" min="0" max="5" value="0" aria-label="Wash horizon in number of washes" />
+    </div>
+
+    <div class="sidebar-section">
+      <details class="optional-measurements">
+        <summary>Direct measurements <span class="demo-tag" style="background:transparent;color:var(--muted);padding:0;font-weight:600">More accurate</span></summary>
+        <p class="demo-note" style="margin-top:10px"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Used directly instead of being estimated when provided.</p>
+        <div class="grid-2">
+          <div><label for="chestIn">Chest (cm)</label><input id="chestIn" type="number" placeholder="100" min="50" max="200" /></div>
+          <div><label for="waistIn">Waist (cm)</label><input id="waistIn" type="number" placeholder="84" min="40" max="200" /></div>
+        </div>
+        <div class="grid-2">
+          <div><label for="shoulderIn">Shoulder (cm)</label><input id="shoulderIn" type="number" placeholder="45" min="25" max="80" /></div>
+          <div><label for="sleeveIn">Sleeve (cm)</label><input id="sleeveIn" type="number" placeholder="59" min="30" max="100" /></div>
+        </div>
+      </details>
+    </div>
 
     <div class="consent-box">
       <label class="consent-label" for="consentCheck">
@@ -230,15 +229,47 @@
         <span>I consent to processing my measurements to generate a fit recommendation. Data is used for this session only and is not stored.</span>
       </label>
       <span class="field-error" id="err-consent" aria-live="polite"></span>
-      <p class="privacy-notice"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Privacy notice: raw body photos are never captured or stored by this demo. Measurements you enter are processed in memory only and discarded after the response is returned.</p>
+      <p class="privacy-notice"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Raw body photos are never captured or stored. Measurements are processed in memory only.</p>
     </div>
 
     <button class="btn-gradient btn-purple" id="recommendBtn"><i class="fa-solid fa-robot" aria-hidden="true"></i> Get AI Recommendation</button>
+  </aside>
 
-    <div id="shopperResult" class="result-area"></div>
-  </section>
+  <!-- ================= WORKSPACE ================= -->
+  <main class="workspace">
+    <div class="tabs" role="tablist" aria-label="Workspace mode">
+      <button type="button" class="tab-btn active" id="tabBtnSeller" role="tab" aria-selected="true" aria-controls="tabPanelSeller">Seller Studio</button>
+      <button type="button" class="tab-btn" id="tabBtnShopper" role="tab" aria-selected="false" aria-controls="tabPanelShopper">Shopper Fit Analysis</button>
+    </div>
 
-</main>
+    <section class="tab-panel active" id="tabPanelSeller" role="tabpanel" aria-labelledby="tabBtnSeller">
+      <div class="card panel reveal">
+        <div class="panel-head">
+          <div class="panel-icon"><i class="fa-solid fa-store" aria-hidden="true"></i></div>
+          <div>
+            <h2>Size Chart</h2>
+            <p class="panel-sub">Generated by chart-service — real API, no mock data</p>
+          </div>
+        </div>
+        <div id="sellerResult" class="result-area"></div>
+      </div>
+    </section>
+
+    <section class="tab-panel" id="tabPanelShopper" role="tabpanel" aria-labelledby="tabBtnShopper">
+      <div class="card panel reveal">
+        <div class="panel-head">
+          <div class="panel-icon purple"><i class="fa-solid fa-robot" aria-hidden="true"></i></div>
+          <div>
+            <h2>Fit Recommendation</h2>
+            <p class="panel-sub">Real-time, sub-150ms sizing</p>
+          </div>
+        </div>
+        <div id="shopperResult" class="result-area"></div>
+      </div>
+    </section>
+  </main>
+
+</div>
 
 <section class="stats reveal">
   <div class="stats-head">
@@ -297,7 +328,7 @@
     </div>
     <div class="about-card">
       <h3><i class="fa-solid fa-gears" aria-hidden="true"></i> How It Works</h3>
-      <p>A multi-agent AI pipeline reads garment images, fabric specs, and tech packs to auto-generate a dynamic size chart in seconds. A Bayesian fit model then matches shopper measurements against that chart in real time.</p>
+      <p>Seller inputs generate a size chart with per-cell explanations. A zone-based fit engine then matches shopper measurements against that chart in real time.</p>
     </div>
     <div class="about-card">
       <h3><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Benefits</h3>
@@ -317,19 +348,17 @@
     <div class="tech-card"><i class="fa-solid fa-plug" aria-hidden="true"></i><span>REST API</span></div>
     <div class="tech-card"><i class="fa-solid fa-robot" aria-hidden="true"></i><span>AI Recommendation</span></div>
     <div class="tech-card"><i class="fa-solid fa-camera" aria-hidden="true"></i><span>Computer Vision Ready</span></div>
-    <div class="tech-card"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i><span>Bayesian Fit Engine</span></div>
+    <div class="tech-card"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i><span>Fit Scoring Engine</span></div>
     <div class="tech-card"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i><span>Responsive SPA</span></div>
   </div>
 </section>
 
 <footer class="footer">
   <div class="footer-inner">
-    <div class="brand"><i class="fa-solid fa-shirt" aria-hidden="true"></i> FitChart <span>AI</span></div>
+    <div class="brand" style="justify-content:center"><i class="fa-solid fa-shirt" aria-hidden="true"></i> FitChart AI</div>
     <p>Built for Hiring Hackathon 2026 — Track 6: Fit Chart Generator</p>
     <div class="footer-links">
-      <a href="#"><i class="fa-brands fa-github" aria-hidden="true"></i> Source</a>
-      <a href="#seller">Seller Dashboard</a>
-      <a href="#shopper">Shopper Assistant</a>
+      <a href="https://github.com/sairaghu401-cloud/Fit_Chart_Generator" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github" aria-hidden="true"></i> Source</a>
       <a href="#about">About</a>
     </div>
   </div>

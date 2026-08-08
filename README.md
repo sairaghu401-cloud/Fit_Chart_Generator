@@ -241,7 +241,7 @@ Probabilities: S 7.7% · M 7.8% · L 60.0% · XL 24.5%
 
 ## 🧪 Verification / Testing
 
-There is no automated test suite in this repository (see [§ Current Limitations](#️-current-limitations)). The fit-scoring logic was verified manually against five cases, run directly through the live `POST /v1/fit/recommend` endpoint:
+In addition to the 20-test automated `pytest` suite (`tests/`, see [§ Technology Stack](#️-technology-stack)), the fit-scoring logic was verified manually against five cases, run directly through the live `POST /v1/fit/recommend` endpoint:
 
 | Case | Height | Weight | Preference | Recommended | Confidence | Fit Quality |
 |------|--------|--------|------------|--------------|------------|--------------|

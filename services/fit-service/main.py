@@ -6,7 +6,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 app = FastAPI(title="fit-service")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -34,12 +34,12 @@ ARTIFACTS: dict[str, dict] = {
 
 
 class BodyInput(BaseModel):
-    height_cm: float
-    weight_kg: float
-    chest_cm: Optional[float] = None
-    waist_cm: Optional[float] = None
-    shoulder_cm: Optional[float] = None
-    sleeve_cm: Optional[float] = None
+    height_cm: float = Field(gt=0)
+    weight_kg: float = Field(gt=0)
+    chest_cm: Optional[float] = Field(default=None, gt=0)
+    waist_cm: Optional[float] = Field(default=None, gt=0)
+    shoulder_cm: Optional[float] = Field(default=None, gt=0)
+    sleeve_cm: Optional[float] = Field(default=None, gt=0)
     fit_preference: str = "regular"
     usual_size: Optional[str] = None  # optional self-report, e.g. "L" — a soft prior, never a hard override
 
